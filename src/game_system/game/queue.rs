@@ -1,9 +1,11 @@
-struct Queue {
+use super::token::Token;
+
+pub struct Queue {
     queue: Vec<Token>,
 }
 
 impl Queue {
-    fn new() -> Queue {
+    pub fn new() -> Queue {
         Queue {
             queue: Vec::new(),
         }
