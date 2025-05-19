@@ -4,7 +4,7 @@ use adventure_generator::quest::*;
 fn main() {
    //open menu
 
-   let game = game::Game::new();
+   let mut game = game::Game::new();
    
    game.get_state(game::State::Create);
 

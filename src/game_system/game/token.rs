@@ -11,6 +11,7 @@ pub struct Position {
     x:i128,
     y:i128,
 }
+
 impl Position {
     pub fn new(x:i128,y:i128) -> Position {
         Position {
@@ -18,8 +19,14 @@ impl Position {
             y: y,
         }
     }
+    pub fn clone(&self) -> Position {
+        Position {
+            x: self.x,
+            y: self.y,
+        }
+    }
 }
-
+#[derive(Clone)]
 pub enum TokenType {
     Objective,
     Giver,
@@ -34,5 +41,18 @@ impl Token {
             position: position,
             value: value,
         }
+    }
+
+    pub fn clone(&self) -> Token {
+        Token {
+            id: self.id,
+            token_type: self.token_type.clone(),
+            position: self.position.clone(),
+            value: self.value.clone(),
+        }
+    }
+
+    pub fn set_data(&mut self,val:TokenData){
+        self.value = val;
     }
 }
