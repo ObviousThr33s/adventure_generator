@@ -1,79 +1,106 @@
 use std::process::exit;
-use std::io;
+use std::io::{self};
 
-use rust_bert::{gpt2::GPT2Generator, pipelines::{generation_utils::{GenerateOptions, GeneratedTextOutput, LanguageGenerator},text_generation::TextGenerationModel}};
+use state::{GameState, State};
+use write::Writer;
 
-pub mod queue;
-pub mod token_data;
-pub mod token;
+
+pub mod write;
+pub mod create;
+pub mod play;
+
+pub mod state;
 
 pub struct Game{
-	_queue: queue::Queue,
-	_state:State,
+	system_state:SystemState,
+	game_state:State,
+	tick:usize
 }
 
-pub enum State {
+pub enum SystemState {
 	Create,
 	Write,
 	Play,
 	End,
 }
 
+
 //seek the word
 
 impl Game {
 	pub fn new() -> Game {
 		Game {
-			_queue: queue::Queue::new(),
-			_state:State::Create,
+			system_state:SystemState::Write,
+			game_state:State::new(
+				"Generate a prompt".to_string(),
+				GameState::GeneratePrompt
+			),
+			tick:0
 		}
 	}
 
-	pub fn get_state(&mut self, state:State) -> () {
+	pub fn get_state(&mut self, state:SystemState) -> () {
 		
 		match state {
-			State::Create => {
-				println!("{:?}", self.create_objective());
-				self.get_state(State::Write);
+			SystemState::Create => {
+				self.create(self.game_state.get_state());
 			}
-			State::Write => {
-				// /self.write(t.clone());
+			SystemState::Write => {
+				self.write(self.game_state.get_prompt());
 			}
-			State::Play => {
+			SystemState::Play => {
 				self.play();
 			}
-			State::End => {
+			SystemState::End => {
 				exit(0x0);
 			}
 		};
 	}
 
-	pub fn create_objective(&mut self) -> Vec<GeneratedTextOutput> {
-		let model = GPT2Generator::new(Default::default ())
-			.expect("Could not create generator");
-
-		let generate_options = GenerateOptions {
-			max_length: Some(30),
-			..Default::default()
-		};
-
-		let output = model.generate(Some(&["generate a name"]), Some(generate_options));
-		output.unwrap()
+	pub fn create(&mut self, game_state:GameState) {
+		
+		match game_state {
+			GameState::GeneratePrompt => {
+				let prompt = State::generate_prompt();
+				self.game_state.set_prompt(prompt);
+				self.game_state.set_state(GameState::ParseAnswer);
+			}
+			GameState::ParseAnswer => {
+				let answer = State::parse_answer(self);
+				self.game_state.set_prompt(answer);
+			}
+			GameState::GenerateResponse => {
+				let response = State::generate_response();
+				self.game_state.set_prompt(response);
+				self.game_state.set_state(GameState::Play);
+			}
+			GameState::Play => {
+				self.play();
+			}
+			GameState::End => {
+				self.get_state(SystemState::End);
+			}
+		}
+		self.get_state(SystemState::Write);
 	}
 
-	pub fn write(&mut self, t:token::Token){
-		println!("{}", t.value.to_string());
-		self.get_state(State::Play);
+
+	pub fn write(&mut self, s_:String){
+		let writer = write::Writer::new();
+
+		writer.write(s_);
+
+		self.get_state(SystemState::Create);
 	}
 
-	pub fn play(&mut self) -> () {
-		self.get_state(State::End);
+	pub fn play(&mut self) {
+
+		//Game play logic
+		let writer = write::Writer::new();
+		writer.write("Game play logic".to_string());
+
+		self.game_state.set_state(GameState::ParseAnswer);
+		self.get_state(SystemState::Create);
 	}
 
-
-	fn _read_line() -> String {
-		let mut input = String::new();
-		io::stdin().read_line(&mut input).expect("Failed to read line");
-		input.trim().to_string()
-	}
 }
