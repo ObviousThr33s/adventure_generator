@@ -1,1 +1,1 @@
-pub mod basic_generator;
+pub mod classify_input;

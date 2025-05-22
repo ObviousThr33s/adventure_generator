@@ -24,7 +24,26 @@ pub enum SystemState {
 	End,
 }
 
+impl Clone for SystemState {
+	fn clone(&self) -> Self {
+		match self {
+			SystemState::Create => SystemState::Create,
+			SystemState::Write => SystemState::Write,
+			SystemState::Play => SystemState::Play,
+			SystemState::End => SystemState::End,
+		}
+	}
+}
 
+impl Clone for Game {
+	fn clone(&self) -> Self {
+		Game {
+			system_state: self.system_state.clone(),
+			game_state: self.game_state.clone(),
+			tick: self.tick,
+		}
+	}
+}
 //seek the word
 
 impl Game {
@@ -66,11 +85,11 @@ impl Game {
 				self.game_state.set_state(GameState::ParseAnswer);
 			}
 			GameState::ParseAnswer => {
-				let answer = State::parse_answer(self);
+				let answer = State::parse_answer_as_command(self);
 				self.game_state.set_prompt(answer);
 			}
 			GameState::GenerateResponse => {
-				let response = State::generate_response();
+				let response = self.game_state.clone().generate_response();
 				self.game_state.set_prompt(response);
 				self.game_state.set_state(GameState::Play);
 			}

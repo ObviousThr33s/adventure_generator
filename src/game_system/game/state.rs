@@ -19,6 +19,15 @@ pub enum GameState{
 	End
 }
 
+impl Clone for State {
+	fn clone(&self) -> Self {
+		State {
+			prompt: self.prompt.clone(),
+			state: self.state.clone(),
+		}
+	}
+}
+
 impl State {
 	pub fn new(prompt:String, state:GameState) -> State {
 		State {
@@ -47,17 +56,47 @@ impl State {
 		String::from("Generate a prompt")
 	}
 		
-	pub fn generate_response() -> String {
-		let response_generator:generators::basic_generator::BasicGenerator = 
-			generators::basic_generator::BasicGenerator::new();
+	pub fn generate_response(self) -> String {
+		let response_generator:generators::classify_input::Classify = 
+			generators::classify_input::Classify::new();
 
-		response_generator.generate("Generate a response")
+		let labels = vec![
+			String::from("combat"),
+			String::from("exploration"),
+			String::from("puzzle"),
+			String::from("social"),
+			String::from("other")
+		];
+
+		response_generator.classify(&self.prompt, labels.clone());
+
+		for (label, score) in response_generator.classify(&self.prompt, labels.clone()) {
+			println!("{}: {}", label, score);
+		}
+		
+		// Find the string with the highest score
+		let classified = response_generator.classify(&self.prompt, labels);
+
+		// Default response if no classification is found
+		let mut highest_score = 0.0;
+		let mut highest_label = String::from("other");
+
+		for (label, score) in classified {
+			if score > highest_score {
+				highest_score = score;
+				highest_label = label;
+			}
+		}
+
+		format!("Response for {}", highest_label)
 	}
 
-	pub fn parse_answer(game: &mut Game) -> String {
+	pub fn parse_answer_as_command(game: &mut Game) -> String {
 		let command = command_system::CommandSystem::read_input();
 		let parsed_command = command_system::CommandSystem::parse_command(&command);
 		
+		//Add a match statement to handle the parsed command
+		//this will allow for the command to be executed
 		match parsed_command {
 			
 			command_system::CommandType::EXIT => {
@@ -65,6 +104,8 @@ impl State {
 				"Exiting the game...".to_string()
 			}
 
+			//Return the text of the command as a string if it is not a command
+			//this can then be passed to the response generator
 			command_system::CommandType::UNKNOWN => {
 				game.game_state.set_state(GameState::GenerateResponse);
 				command

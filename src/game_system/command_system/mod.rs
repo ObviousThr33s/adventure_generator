@@ -19,13 +19,12 @@ impl CommandSystem {
 	}
 
 	fn load_commands_from_file(filename: &str) -> Result<Vec<(Vec<String>, CommandType)>, std::io::Error> {
-		// For now return a default set of commands
-		// This can be expanded later to read from a JSON file
+		// Read the file content
 		let file_content = match std::fs::read_to_string("./commands.json") {
 			Ok(content) => content,
 			Err(e) => return Err(e),
 		};
-
+		// Parse the JSON content
 		let json_data = match parse(&file_content) {
 			Ok(data) => data,
 			Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
@@ -33,10 +32,13 @@ impl CommandSystem {
 
 		let mut commands: Vec<(Vec<String>, CommandType)> = Vec::new();
 		
-
+		// Check if the JSON data is an object
+		// Iterate over the object to extract command types and their aliases
 		if let json::JsonValue::Object(obj) = json_data {
 			for (key, value) in obj.iter() {
 				// Convert string key to CommandType
+				// Command keys are expected to be in uppercase
+				// add new command key bindings here and in commands.json
 				let cmd_type = match key {
 					"EXIT" => CommandType::EXIT,
 					"UNKNOWN" => CommandType::UNKNOWN,
