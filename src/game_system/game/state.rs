@@ -60,7 +60,8 @@ impl State {
 	}
 	
 	pub fn generate_prompt() -> String {
-		String::from("Generate a prompt")
+		//String::from("You are a player in a text-based game. You can explore, fight, or solve puzzles. What do you want to do?")
+		String::from("No prompt available.")
 	}
 		
 	pub fn generate_response(self) -> (InputLabels, String) {
@@ -125,7 +126,7 @@ impl State {
 			
 			command_system::CommandType::HELP => {
 				game.game_state.set_state(GameState::GeneratePrompt);
-				"Available commands: EXIT, HELP".to_string()
+				"Available commands: EXIT, HELP,\nAvailable actions: try exploring or fighting.".to_string()
 			}
 		}
 	}

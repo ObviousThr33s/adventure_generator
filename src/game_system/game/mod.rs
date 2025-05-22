@@ -130,32 +130,33 @@ impl Game {
 
 		if self.tick == 0 {
 			let attacker = game_entity::Entity::new(0, "Hero".to_string(), 100, 10, 5);
-			let target = game_entity::Entity::new(1, "Monster".to_string(), 50, 8, 3);
 			self.logic.entities.push(attacker);
-			self.logic.entities.push(target);
 		}
 
 
 		match self.play_state {
 			InputLabels::Combat => {
 				// Combat logic
-				writer.write("Combat logic".to_string());
 				self.logic.update(&mut self.play_state, self.tick);
 			}
 			InputLabels::Exploration => {
 				// Exploration logic
-				writer.write("Exploration logic".to_string());
+				self.logic.update(&mut self.play_state, self.tick);
+				writer.write("Enemy found!".to_string());
 			}
 			InputLabels::Puzzle => {
 				// Puzzle logic
 				writer.write("Puzzle logic".to_string());
+				self.logic.update(&mut self.play_state, self.tick);
 			}
 			InputLabels::Other => {
 				// Other logic
 				writer.write("Other logic".to_string());
+				
 			}
 		}
 
+		self.tick += 1;
 		self.game_state.set_state(GameState::ParseAnswer);
 		self.get_state(SystemState::Create);
 	}

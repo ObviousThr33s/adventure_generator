@@ -1,5 +1,5 @@
 pub struct Entity {
-	pub id: u32,
+	pub id: usize,
 	pub name: String,
 	pub health: i32,
 	pub attack: u32,
@@ -26,7 +26,7 @@ impl std::fmt::Debug for Entity {
 }
 
 impl Entity {
-	pub fn new(id: u32, name: String, health: i32, attack: u32, defense: i32) -> Self {
+	pub fn new(id: usize, name: String, health: i32, attack: u32, defense: i32) -> Self {
 		Entity {
 			id,
 			name,
@@ -35,8 +35,8 @@ impl Entity {
 			defense,
 		}
 	}
-	
-	pub fn get_id(&self) -> u32 {
+
+	pub fn get_id(&self) -> usize {
 		self.id
 	}
 	

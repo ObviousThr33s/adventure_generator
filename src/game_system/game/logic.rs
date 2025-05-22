@@ -4,6 +4,7 @@ use super::{game_entity, state::InputLabels};
 
 pub(crate) struct Logic {
 	pub entities: Vec<game_entity::Entity>,
+	target:usize
 }
 
 #[derive(Clone)]
@@ -16,6 +17,7 @@ impl Clone for Logic {
 	fn clone(&self) -> Self {
 		Logic {
 			entities: self.entities.clone(),
+			target: self.target,
 		}
 	}
 }
@@ -24,6 +26,7 @@ impl Logic {
 	pub fn new() -> Self {
 		Logic {
 			entities: Vec::new(),
+			target: 1,
 		}
 	}
 
@@ -35,10 +38,12 @@ impl Logic {
 		match play_state {
 			InputLabels::Combat => {
 				let attack_type = AttackType::Physical; // Example attack type
-				self.attack(attack_type, 0, 1);
+				self.attack(attack_type, 0, self.entities.len()-1);
 			}
 			InputLabels::Exploration => {
-				// Handle exploration logic
+				self.entities.push(game_entity::Entity { id: tick, name: format!("Monster {}", self.target), health: 50, attack: 8, defense: 3 });
+				self.target += 1;
+				println!("Exploring... Found: {}", self.entities.last().unwrap().get_name());
 			}
 			InputLabels::Puzzle => {
 				// Handle puzzle logic
@@ -74,11 +79,21 @@ impl Logic {
 		damage
 	}
 
-	pub fn attack(&mut self, attack_type: AttackType, attacker_id: u32, target_id: u32) {
+	pub fn attack(&mut self, attack_type: AttackType, attacker_id: usize, target_id: usize) {
+		
+		
 		let damage = self.roll(attack_type.clone());
 
-		let attacker_idx = attacker_id as usize;
-		let target_idx = target_id as usize;
+		let attacker_idx = attacker_id;
+		let target_idx = target_id;
+
+		if target_idx == 0 {
+
+			println!("{:?}", self.entities);
+
+			println!("Go explore the world!");
+			return;
+		}
 
 		let (attacker, target) = if attacker_idx < target_idx {
 			let (left, right) = self.entities.split_at_mut(target_idx);
@@ -87,7 +102,8 @@ impl Logic {
 			let (left, right) = self.entities.split_at_mut(attacker_idx);
 			(&mut right[0], &mut left[target_idx])
 		} else {
-			panic!("Attacker and target cannot be the same entity");
+			println!("Go explore the world!");
+			return;
 		};
 
 		if target.get_health() <= 0 {
@@ -107,9 +123,7 @@ impl Logic {
 		println!("{}'s health after attack: {}", target.get_name(), target.get_health());
 		if target.get_health() <= 0 {
 			println!("{} has been defeated!", target.get_name());
-			// Handle defeat logic (e.g., remove entity, trigger events)
-			// For now, just set health to 0
-			target.set_health(0);
+			self.entities.remove(target_idx);
 		} else {
 			target.set_health(target.get_health());
 		}
