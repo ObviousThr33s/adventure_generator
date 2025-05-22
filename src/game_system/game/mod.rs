@@ -11,11 +11,15 @@ pub mod play;
 
 pub mod state;
 
+pub mod game_entity;
+pub mod logic;
+
 pub struct Game{
 	system_state:SystemState,
 	game_state:State,
 	play_state:InputLabels,
-	tick:usize
+	tick:usize,
+	logic:logic::Logic,
 }
 
 pub enum SystemState {
@@ -43,6 +47,7 @@ impl Clone for Game {
 			game_state: self.game_state.clone(),
 			play_state: self.play_state.clone(),
 			tick: self.tick,
+			logic: self.logic.clone(),
 		}
 	}
 }
@@ -57,6 +62,7 @@ impl Game {
 			),
 			tick:0,
 			play_state:InputLabels::Other,
+			logic:logic::Logic::new(),
 		}
 	}
 
@@ -94,7 +100,7 @@ impl Game {
 				let response = self.game_state.clone().generate_response();
 				self.game_state.set_prompt(response.1);
 				self.play_state = response.0;
-				
+
 				self.game_state.set_state(GameState::Play);
 			}
 			GameState::Play => {
@@ -122,10 +128,19 @@ impl Game {
 		let writer = write::Writer::new();
 		writer.write("Game play logic".to_string());
 
+		if self.tick == 0 {
+			let attacker = game_entity::Entity::new(0, "Hero".to_string(), 100, 10, 5);
+			let target = game_entity::Entity::new(1, "Monster".to_string(), 50, 8, 3);
+			self.logic.entities.push(attacker);
+			self.logic.entities.push(target);
+		}
+
+
 		match self.play_state {
 			InputLabels::Combat => {
 				// Combat logic
 				writer.write("Combat logic".to_string());
+				self.logic.update(&mut self.play_state, self.tick);
 			}
 			InputLabels::Exploration => {
 				// Exploration logic

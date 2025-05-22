@@ -1,4 +1,4 @@
-struct Entity {
+pub struct Entity {
 	pub id: u32,
 	pub name: String,
 	pub health: u32,
