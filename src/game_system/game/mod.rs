@@ -1,7 +1,7 @@
 use std::process::exit;
 use std::io::{self};
 
-use state::{GameState, State};
+use state::{GameState, InputLabels, State};
 use write::Writer;
 
 
@@ -14,6 +14,7 @@ pub mod state;
 pub struct Game{
 	system_state:SystemState,
 	game_state:State,
+	play_state:InputLabels,
 	tick:usize
 }
 
@@ -40,11 +41,11 @@ impl Clone for Game {
 		Game {
 			system_state: self.system_state.clone(),
 			game_state: self.game_state.clone(),
+			play_state: self.play_state.clone(),
 			tick: self.tick,
 		}
 	}
 }
-//seek the word
 
 impl Game {
 	pub fn new() -> Game {
@@ -54,7 +55,8 @@ impl Game {
 				"Generate a prompt".to_string(),
 				GameState::GeneratePrompt
 			),
-			tick:0
+			tick:0,
+			play_state:InputLabels::Other,
 		}
 	}
 
@@ -90,11 +92,13 @@ impl Game {
 			}
 			GameState::GenerateResponse => {
 				let response = self.game_state.clone().generate_response();
-				self.game_state.set_prompt(response);
+				self.game_state.set_prompt(response.1);
+				self.play_state = response.0;
+				
 				self.game_state.set_state(GameState::Play);
 			}
 			GameState::Play => {
-				self.play();
+				self.get_state(SystemState::Play);
 			}
 			GameState::End => {
 				self.get_state(SystemState::End);
@@ -117,6 +121,25 @@ impl Game {
 		//Game play logic
 		let writer = write::Writer::new();
 		writer.write("Game play logic".to_string());
+
+		match self.play_state {
+			InputLabels::Combat => {
+				// Combat logic
+				writer.write("Combat logic".to_string());
+			}
+			InputLabels::Exploration => {
+				// Exploration logic
+				writer.write("Exploration logic".to_string());
+			}
+			InputLabels::Puzzle => {
+				// Puzzle logic
+				writer.write("Puzzle logic".to_string());
+			}
+			InputLabels::Other => {
+				// Other logic
+				writer.write("Other logic".to_string());
+			}
+		}
 
 		self.game_state.set_state(GameState::ParseAnswer);
 		self.get_state(SystemState::Create);

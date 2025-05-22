@@ -18,6 +18,13 @@ pub enum GameState{
 	Play,
 	End
 }
+#[derive(Clone)]
+pub enum InputLabels{
+	Combat,
+	Exploration,
+	Puzzle,
+	Other
+}
 
 impl Clone for State {
 	fn clone(&self) -> Self {
@@ -56,7 +63,7 @@ impl State {
 		String::from("Generate a prompt")
 	}
 		
-	pub fn generate_response(self) -> String {
+	pub fn generate_response(self) -> (InputLabels, String) {
 		let response_generator:generators::classify_input::Classify = 
 			generators::classify_input::Classify::new();
 
@@ -64,7 +71,6 @@ impl State {
 			String::from("combat"),
 			String::from("exploration"),
 			String::from("puzzle"),
-			String::from("social"),
 			String::from("other")
 		];
 
@@ -88,7 +94,13 @@ impl State {
 			}
 		}
 
-		format!("Response for {}", highest_label)
+		// Convert string to InputLabels enum variant
+		match highest_label.as_str() {
+			"combat" => (InputLabels::Combat, highest_label),
+			"exploration" => (InputLabels::Exploration, highest_label),
+			"puzzle" => (InputLabels::Puzzle, highest_label),
+			_ => (InputLabels::Other, highest_label),
+		}
 	}
 
 	pub fn parse_answer_as_command(game: &mut Game) -> String {
