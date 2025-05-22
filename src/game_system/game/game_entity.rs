@@ -1,9 +1,9 @@
 pub struct Entity {
 	pub id: u32,
 	pub name: String,
-	pub health: u32,
+	pub health: i32,
 	pub attack: u32,
-	pub defense: u32,
+	pub defense: i32,
 }
 
 impl Clone for Entity {
@@ -26,7 +26,7 @@ impl std::fmt::Debug for Entity {
 }
 
 impl Entity {
-	pub fn new(id: u32, name: String, health: u32, attack: u32, defense: u32) -> Self {
+	pub fn new(id: u32, name: String, health: i32, attack: u32, defense: i32) -> Self {
 		Entity {
 			id,
 			name,
@@ -44,7 +44,7 @@ impl Entity {
 		self.name.clone()
 	}
 	
-	pub fn get_health(&self) -> u32 {
+	pub fn get_health(&self) -> i32 {
 		self.health
 	}
 	
@@ -52,11 +52,11 @@ impl Entity {
 		self.attack
 	}
 	
-	pub fn get_defense(&self) -> u32 {
+	pub fn get_defense(&self) -> i32 {
 		self.defense
 	}
-	
-	pub fn set_health(&mut self, health: u32) {
+
+	pub fn set_health(&mut self, health: i32) {
 		self.health = health;
 	}
 	
@@ -64,7 +64,7 @@ impl Entity {
 		self.attack = attack;
 	}
 	
-	pub fn set_defense(&mut self, defense: u32) {
+	pub fn set_defense(&mut self, defense: i32) {
 		self.defense = defense;
 	}
 }

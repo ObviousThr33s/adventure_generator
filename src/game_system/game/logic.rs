@@ -34,13 +34,8 @@ impl Logic {
 
 		match play_state {
 			InputLabels::Combat => {
-				let attack_type = AttackType::Physical;
-				let damage = self.roll(attack_type.clone());
-				if self.entities.len() >= 2 {
-					let (first, second) = self.entities.split_at_mut(1);
-					Self::attack(damage, attack_type, &mut first[0], &mut second[0]);
-					second[0].set_health(second[0].get_health() - damage);
-				}
+				let attack_type = AttackType::Physical; // Example attack type
+				self.attack(attack_type, 0, 1);
 			}
 			InputLabels::Exploration => {
 				// Handle exploration logic
@@ -79,16 +74,45 @@ impl Logic {
 		damage
 	}
 
-	pub fn attack(damage: u32, attack_type: AttackType, attacker: &mut game_entity::Entity, target: &mut game_entity::Entity) {
+	pub fn attack(&mut self, attack_type: AttackType, attacker_id: u32, target_id: u32) {
+		let damage = self.roll(attack_type.clone());
+
+		let attacker_idx = attacker_id as usize;
+		let target_idx = target_id as usize;
+
+		let (attacker, target) = if attacker_idx < target_idx {
+			let (left, right) = self.entities.split_at_mut(target_idx);
+			(&mut left[attacker_idx], &mut right[0])
+		} else if attacker_idx > target_idx {
+			let (left, right) = self.entities.split_at_mut(attacker_idx);
+			(&mut right[0], &mut left[target_idx])
+		} else {
+			panic!("Attacker and target cannot be the same entity");
+		};
+
+		if target.get_health() <= 0 {
+			println!("{} is already defeated!", target.get_name());
+			return;
+		}
+		
 		println!("{}'s health before attack: {}", target.get_name(), target.get_health());
 		let attack_message = match attack_type {
 			AttackType::Physical => format!("{} attacks {} for {} damage!", attacker.get_name(), target.get_name(), damage),
 			AttackType::Magical => format!("{} casts a spell on {} for {} damage!", attacker.get_name(), target.get_name(), damage),
 		};
 
-		
+		target.set_health(target.get_health() - damage as i32);
+
 		println!("{}", attack_message);
-		println!("{}'s health after attack: {}", target.get_name(), target.get_health() - damage);
+		println!("{}'s health after attack: {}", target.get_name(), target.get_health());
+		if target.get_health() <= 0 {
+			println!("{} has been defeated!", target.get_name());
+			// Handle defeat logic (e.g., remove entity, trigger events)
+			// For now, just set health to 0
+			target.set_health(0);
+		} else {
+			target.set_health(target.get_health());
+		}
 	}
 
 }
