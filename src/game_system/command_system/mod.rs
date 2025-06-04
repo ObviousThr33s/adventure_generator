@@ -1,9 +1,7 @@
 use std::io::{self, BufRead, Write};
 use std::fmt::Debug;
 
-use dialoguer::console::Key;
-use json::{parse, value};
-use tch::COptimizer;
+use json::parse;
 
 pub struct CommandSystem;
 #[derive(Debug, Clone)]
@@ -18,7 +16,7 @@ impl CommandSystem {
 		CommandSystem
 	}
 
-	fn load_commands_from_file(filename: &str) -> Result<Vec<(Vec<String>, CommandType)>, std::io::Error> {
+	fn load_commands_from_file(_filename: &str) -> Result<Vec<(Vec<String>, CommandType)>, std::io::Error> {
 		// Read the file content
 		let file_content = match std::fs::read_to_string("./commands.json") {
 			Ok(content) => content,

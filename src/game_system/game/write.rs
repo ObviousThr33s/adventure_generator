@@ -11,14 +11,14 @@ impl Writer {
 		std::fs::read_to_string(path)
 	}
 
-	pub fn write(&self, s:String) -> () {
+	pub fn write(s:&str) -> () {
 		let text = s;
 
 		print!("<<:");
 		let text = if let Some(index) = text.find('\n') {
 			text[index + 1..].to_string()
 		} else {
-			text
+			text.to_string()
 		};
 
 		for c in text.chars() {
