@@ -1,6 +1,8 @@
 use std::{fmt::format, process::exit};
 
 use crate::game_system::{animations::{print_frames_with_delay, shimmer::{gen_tv_static}}, command_system::CommandSystem, game::{classify_input::Classify, write::Writer}};
+use rand::distr::Alphanumeric;
+use rand::Rng;
 
 pub mod write;
 pub mod classify_input;
@@ -8,9 +10,7 @@ pub mod dialogue;
 
 #[derive(Clone)]
 pub struct Game {
-	hp:i32,
 	energy:i32,
-	joy:i32,
 	input:String,
 	scenes:Vec<(String, fn(&mut Game))>,
 	current_output: Vec<(String, f32)>
@@ -20,16 +20,14 @@ impl Game{
 
 	pub fn new() -> Self {
 		Game {
-			hp:100,
 			energy:100,
-			joy:100,
-			input:"Hello".to_string(),
+			input:"monologue".to_string(),
 			scenes:vec![("exit".to_string(), Self::exit_clean),
 						("dialogue".to_string(),Self::dialogue),
-						("monologue".to_string(), Self::monologue),
+						("question".to_string(), Self::monologue),
 						("energy".to_string(), Self::energy_check),
 						("data".to_string(), Self::data_dump),
-						("question place".to_string(), Self::give_place)],
+						("question place".to_string(), Self::scene1)],
 			current_output: Vec::new(),
 		}
 	}
@@ -39,6 +37,8 @@ impl Game{
 		let mut game = Game::new();
 		let classiy_input:Classify = Classify::new();
 		let scenes = &game.scenes.clone();
+
+		Self::scene0(&mut game);
 
 		loop {
 			game.input = CommandSystem::read_input();
@@ -67,7 +67,7 @@ impl Game{
 		
 		g.current_output = output.clone();
 
-		//print!("{:?}\n", output.clone());
+		print!("{:?}\n", output.clone());
 
 		// Get the highest confidence label
 		let label = if !g.current_output.is_empty() {
@@ -79,16 +79,13 @@ impl Game{
 		Self::map_to_outcome(scenes, g, label);
 	}
 
-
-	fn give_place(g: &mut Game){
-		Writer::write("Place");
-	}
-
 	fn energy_check(g: &mut Game) {
 		println!("[Energy at:{}] ", g.energy);
 	}
 	
-	fn monologue(g: &mut Game){}
+	fn monologue(g: &mut Game){
+		Self::scene0(g);
+	}
 	
 	fn dialogue(g: &mut Game){
 		let text = dialogue::Dialogue::start_dialogue(
@@ -126,8 +123,36 @@ impl Game{
 	}
 
 	fn scene1(g: &mut Game) {
-		Writer::write("Where am I?");
-		Writer::write("....");
-		Writer::write("hello?");
+		fn base0(){
+			Writer::write("Where am I?");
+			Writer::write("....");
+			Writer::write("hello?");
+		}
+
+		fn base1(){
+			Writer::write(&Game::get_random_string(rand::random_range(0..100)));
+		}
+
+		fn base2(){
+			Writer::write("help");
+			Writer::write(format!("im {}", Game::get_random_string(7)).as_str());
+		}
+		let cases:Vec<fn()> = vec![base0, base1, base2];
+
+		let mut rng = rand::thread_rng();
+		let idx = rng.gen_range(0..cases.len());
+		cases[idx]();
+		
+		
+	}
+
+	fn get_random_string(count:usize) -> String{
+		let rand_string: String = rand::thread_rng()
+				.sample_iter(&Alphanumeric)
+				.take(count)
+				.map(char::from)
+				.collect();
+
+		rand_string
 	}
 }
