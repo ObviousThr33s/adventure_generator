@@ -4,13 +4,16 @@ use crate::game_system::{animations::{print_frames_with_delay, shimmer::{gen_tv_
 
 pub mod write;
 pub mod classify_input;
+pub mod dialogue;
 
 #[derive(Clone)]
 pub struct Game {
 	hp:i32,
 	energy:i32,
 	joy:i32,
-	scenes:Vec<(String, fn(&mut Game))>
+	input:String,
+	scenes:Vec<(String, fn(&mut Game))>,
+	current_output: Vec<(String, f32)>
 }
 
 impl Game{
@@ -20,11 +23,14 @@ impl Game{
 			hp:100,
 			energy:100,
 			joy:100,
+			input:"Hello".to_string(),
 			scenes:vec![("exit".to_string(), Self::exit_clean),
-						("dialogue".to_string(),Self::scene0),
-						("question".to_string(),Self::scene1),
+						("dialogue".to_string(),Self::dialogue),
+						("monologue".to_string(), Self::monologue),
 						("energy".to_string(), Self::energy_check),
-						("data".to_string(), Self::data_dump)]
+						("data".to_string(), Self::data_dump),
+						("question place".to_string(), Self::give_place)],
+			current_output: Vec::new(),
 		}
 	}
 
@@ -35,12 +41,12 @@ impl Game{
 		let scenes = &game.scenes.clone();
 
 		loop {
-			let input = CommandSystem::read_input();
-			game.energy -= 5;
-			Self::watcher(&classiy_input, input, scenes, &mut game);
+			game.input = CommandSystem::read_input();
+
+			Self::watcher(&classiy_input, scenes, &mut game);
 			game.energy -= 5;
 			
-			if game.energy <= 10 {
+			if game.energy <= 5 {
 				Writer::write("My energy is getting low...");
 				Writer::write("Shutting down...");
 				print_frames_with_delay(gen_tv_static(5), 3);	
@@ -50,59 +56,58 @@ impl Game{
 		}
 	}
 
-	fn watcher(classify_input:&Classify, input:String, scenes:&Vec<(String, fn(&mut Game))>, g:&mut Game) {
+	fn watcher(classify_input:&Classify, scenes:&Vec<(String, fn(&mut Game))>, g:&mut Game) {
 
 		let labels: Vec<String> = scenes.iter().map(|(label, _)| label.clone()).collect();
 
-		let mut output = classify_input.classify(&input, labels);
+		let mut output = classify_input.classify(&g.input, labels);
 
-			// Sort output in descending order by confidence score
-			output.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-			
-			print!("{:?}\n", output.clone());
+		// Sort output in descending order by confidence score
+		output.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+		
+		g.current_output = output.clone();
 
-			// Get the highest confidence label
-			let label = if !output.is_empty() {
-				output[0].0.clone()
-			} else {
-				"unknown".to_string()
-			};
+		//print!("{:?}\n", output.clone());
 
-			Self::map_to_outcome(scenes, g, label);
+		// Get the highest confidence label
+		let label = if !g.current_output.is_empty() {
+			output[0].0.clone()
+		} else {
+			"unknown".to_string()
+		};
+
+		Self::map_to_outcome(scenes, g, label);
 	}
 
+
+	fn give_place(g: &mut Game){
+		Writer::write("Place");
+	}
 
 	fn energy_check(g: &mut Game) {
-		g.energy -= 10;
 		println!("[Energy at:{}] ", g.energy);
 	}
-
-	fn scene0(g: &mut Game) {
-		g.energy -= 10;
-		print_frames_with_delay(gen_tv_static(10), 15);
-		Writer::write("System cleared...");
-		Writer::write("Ready...");
-		Writer::write("....");
-		Writer::write("hello");
-	}
-
-	fn scene1(g: &mut Game) {
-		g.energy -= 10;
-		Writer::write("Where am I?");
-		Writer::write("....");
-		Writer::write("hello?");
+	
+	fn monologue(g: &mut Game){}
+	
+	fn dialogue(g: &mut Game){
+		let text = dialogue::Dialogue::start_dialogue(
+			g.energy,
+			 g.input.clone());
+		Writer::write(&text);
 	}
 
 	fn data_dump (g:&mut Game) {
 		let labels: Vec<String> = g.scenes.iter().map(|(label, _)| label.clone()).collect();
-		let printed_labels = format!("{:#?}", labels);
-
+		let printed_labels = format!("\n\n{:#?}", labels);
+		
 		Writer::write(&printed_labels);
 	}
 
 	fn map_to_outcome(outcomes:&Vec<(String, fn(g:&mut Game))>, g:&mut Game, label:String){
 		for o in outcomes {
 			if o.0.contains(&label) {
+				g.energy -= 10;
 				(o.1)(g)
 			}
 		}
@@ -111,4 +116,18 @@ impl Game{
 		exit(0x0);
 	}
 
+
+	fn scene0(g: &mut Game) {
+		print_frames_with_delay(gen_tv_static(10), 15);
+		Writer::write("System cleared...");
+		Writer::write("Ready...");
+		Writer::write("....");
+		Writer::write("hello");
+	}
+
+	fn scene1(g: &mut Game) {
+		Writer::write("Where am I?");
+		Writer::write("....");
+		Writer::write("hello?");
+	}
 }
